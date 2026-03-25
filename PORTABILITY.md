@@ -13,8 +13,8 @@ To run this application on another computer, follow these steps:
 ## 2. Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/dennis5644r56t7/project-guy.git
-   cd project-guy
+   git clone https://github.com/dennis5644r56t7/scanned-doc-restoration-ai.git
+   cd scanned-doc-restoration-ai
    ```
 2. Create a virtual environment (optional but recommended):
    ```bash
