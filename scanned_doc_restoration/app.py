@@ -7,7 +7,7 @@ import streamlit as st
 import sys
 from pathlib import Path
 import tempfile
-import os
+import hmac
 
 # Add project root to path
 project_root = Path(__file__).parent
@@ -90,8 +90,131 @@ st.markdown("""
     .stButton button {
         width: 100%;
     }
+    .login-card {
+        padding: 1.75rem;
+        border: 1px solid #E5E7EB;
+        border-radius: 1rem;
+        background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+    .login-shell {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    .login-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #0F172A;
+        margin-bottom: 0.4rem;
+        line-height: 1.15;
+    }
+    .login-subtitle {
+        color: #475569;
+        font-size: 1rem;
+        margin-bottom: 1.2rem;
+    }
+    .feature-box {
+        background: linear-gradient(135deg, #E0ECFF 0%, #F0F9FF 100%);
+        border: 1px solid #BFDBFE;
+        border-radius: 1rem;
+        padding: 1.25rem;
+        margin-top: 0.75rem;
+    }
+    .feature-title {
+        color: #0F172A;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.65rem;
+    }
+    .feature-item {
+        color: #1E293B;
+        margin-bottom: 0.35rem;
+        font-size: 0.95rem;
+    }
+    .auth-note {
+        font-size: 0.85rem;
+        color: #64748B;
+        margin-top: 0.8rem;
+    }
+    div[data-testid="stTextInput"] input {
+        border-radius: 0.65rem;
+    }
+    div[data-testid="stFormSubmitButton"] button {
+        border-radius: 0.65rem;
+        font-weight: 600;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+
+def get_auth_credentials():
+    """Return fixed credentials for app login."""
+    return "admin", "admin123"
+
+
+def ensure_auth_state():
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
+
+
+def check_login(username: str, password: str) -> bool:
+    valid_username, valid_password = get_auth_credentials()
+    return hmac.compare_digest(username, valid_username) and hmac.compare_digest(password, valid_password)
+
+
+def render_login_page():
+    st.markdown('<div class="login-shell">', unsafe_allow_html=True)
+    left_col, right_col = st.columns([1.1, 1], gap="large")
+
+    with left_col:
+        st.markdown('<h1 class="main-header">📄 Document Restoration AI</h1>', unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div class="feature-box">
+                <div class="feature-title">Secure Access Portal</div>
+                <div class="feature-item">• Restore noisy scanned documents</div>
+                <div class="feature-item">• Auto-correct skew with AI deskewing</div>
+                <div class="feature-item">• Extract clean, copy-ready OCR text</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with right_col:
+        st.markdown('<div class="login-card">', unsafe_allow_html=True)
+        st.markdown('<div class="login-title">Sign In</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="login-subtitle">Use your account credentials to continue to the dashboard.</div>',
+            unsafe_allow_html=True,
+        )
+
+        with st.form("login_form", clear_on_submit=False):
+            username = st.text_input("Username", placeholder="Enter your username")
+            password = st.text_input("Password", type="password", placeholder="Enter your password")
+            submit = st.form_submit_button("Sign In", use_container_width=True)
+
+        if submit:
+            if check_login(username.strip(), password):
+                st.session_state["authenticated"] = True
+                st.success("Login successful.")
+                st.rerun()
+            else:
+                st.error("Invalid username or password.")
+
+        st.markdown(
+            '<div class="auth-note">Authorized access only.</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+ensure_auth_state()
+
+if not st.session_state["authenticated"]:
+    render_login_page()
+    st.stop()
 
 # App header
 st.markdown('<h1 class="main-header">📄 Document Restoration AI</h1>', unsafe_allow_html=True)
@@ -108,6 +231,11 @@ st.markdown("""
 # Sidebar
 with st.sidebar:
     st.image("https://img.icons8.com/color/96/000000/document.png", width=100)
+    if st.button("🚪 Logout", use_container_width=True):
+        st.session_state["authenticated"] = False
+        st.rerun()
+
+    st.markdown("---")
     st.markdown("### 🛠️ Pipeline Settings")
     
     # Denoising method selection
